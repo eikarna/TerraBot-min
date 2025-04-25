@@ -3,7 +3,7 @@ module.exports = {
   description: 'Handles incoming messages and command execution',
   execute: async (terra, msg) => {
     // Skip messages from self
-    if (!terra.config.privateMode && msg.key.fromMe) return;
+    // if (!terra.config.privateMode && msg.key.fromMe) return;
     
     // Extract the text content if available
     let content = '';

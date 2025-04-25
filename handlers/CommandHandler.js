@@ -216,6 +216,7 @@ class CommandHandler {
       chatJid: msg.key.remoteJid,
       isPrivate: !isGroup,
       command,
+      prefix: this.terra.config.prefix,
     };
   }
 
@@ -226,7 +227,7 @@ class CommandHandler {
   async handleMessage(msg) {
     try {
       // Skip processing if message is from bot itself or invalid
-      if (!(this.terra.config.privateMode && msg.key.fromMe) || !msg.message) return;
+      if (/*msg.key.fromMe || */ !msg.message) return;
 
       // Get message content
       const content = this._extractMessageContent(msg);

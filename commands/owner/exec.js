@@ -6,21 +6,24 @@ module.exports = {
   name: 'exec',
   description: 'execute a code',
   aliases: ['$'],
-  usage: '$ [setting] [value]',
+  usage: '[prefix]exec [value]',
   ownerOnly: true,
   execute: async (terra, msg, args, context) => {
     // If no arguments, show current config
     if (!args.length) {
       return terra.reply(msg, "Please provide a code!");
     }
-   
+
+    let m = await terra.sendMessage(context.chatJid, "Executing...", { quoted: msg });
+    let o;
     try {
-      // Evaluate JavaScript code
-      const result = exec(args);
-      return terra.reply(msg, `${result}`);
-    } catch (error) {
-      terra.logger.error(`Error executing eval: ${error.message}`);
-      return terra.reply(msg, `⚠️ there was an error while trying to execute the code: ${error.message}`);
+        o = await exec(args.join(" "));
+    } catch (e) {
+        o = e;
+    } finally {
+        let { stdout, stderr } = o;
+        if (stdout) terra.sendMessage(context.chatJid, { text: stdout, edit: m.key });
+        if (stderr) terra.sendMessage(context.chatJid, { text: stderr, edit: m.key });
     }
   }
 };
