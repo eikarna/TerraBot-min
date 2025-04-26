@@ -35,12 +35,6 @@ module.exports = {
             return txt
         }
 
-        // Route based on commands
-        if (args.length && args[0].startsWith('command:')) {
-            // TODO: show command help individually
-            return showCommandDetails(args[0].slice(8).toLowerCase())
-        }
-
         // Route based on args
         if (args.length && args[0].startsWith('category:')) {
             return showCategoryCommands(args[0].slice(9).toLowerCase())
@@ -65,20 +59,6 @@ module.exports = {
                 categories[cat].push(cmd)
             }
 
-            // Build rows for the list
-            const rows = []
-            for (const [cat, cmds] of Object.entries(categories)) {
-                const headerText = `${getCategoryEmoji(cat)} ${cat.charAt(0).toUpperCase() + cat.slice(1)}`
-                cmds.forEach((cmd) => {
-                    rows.push({
-                        header: headerText,
-                        title: `${prefix}${cmd.name}`,
-                        description: cmd.description || 'No description',
-                        id: `help command:${cmd.name}`,
-                    })
-                })
-            }
-
             const fallbackText = [
                 '*🤖 TerraBot Command Center*',
                 ...Object.entries(categories).map(([cat, cmds]) => {
@@ -88,16 +68,18 @@ module.exports = {
                         (cmd) =>
                             `  • *${prefix}${cmd.name}* - ${cmd.description || 'No description'}`
                     )
-                    return [`\n━━━━━ *${catTitle}* ━━━━━`, ...cmdLines].join('\n')
+                    return [`\n━━━━━ *${catTitle}* ━━━━━`, ...cmdLines].join(
+                        '\n'
+                    )
                 }),
             ].join('\n')
 
             const sections = Object.entries(categories).map(([cat, cmds]) => {
                 return {
-                    title: cat,
-                    highlight_label: `${cat.toUpperCase()} Commands`,
+                    title: cat.charAt(0).toUpperCase() + cat.slice(1),
+                    highlight_label: `${cat.charAt(0).toUpperCase() + cat.slice(1)} Commands`,
                     rows: cmds.map((cmd) => ({
-                        header: cat,
+                        // header: cat.charAt(0).toUpperCase() + cat.slice(1),
                         title: `${prefix}${cmd.name}`,
                         description: cmd.description || 'No description',
                         id: `${cmd.name}`,
@@ -107,7 +89,7 @@ module.exports = {
 
             // Build the buttons payload with nativeFlowInfo
             const payload = {
-                text: fallbackText,
+                caption: fallbackText,
                 buttons: [
                     {
                         buttonId: 'action',
@@ -123,7 +105,30 @@ module.exports = {
                     },
                 ],
                 footer: getLabel('footer', { prefix }),
-                headerType: 1,
+                headerType: 2,
+                document: Buffer.alloc(1, 0),
+                mimetype:
+                    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                viewOnce: true,
+                fileName: 'TerraBot',
+                fileLength: 1,
+                contextInfo: {
+                    isForwarding: true,
+                    forwardingScore: 999,
+                    mentionedJid: [msg.key.participant],
+                    stanzaId: msg.key.id,
+                    externalAdReply: {
+                        title: 'TerraBot Command Center',
+                        body: 'Use the command center to explore all available commands.',
+                        mediaType: 1,
+                        showAdAttribution: true,
+                        renderLargerThumbnail: true,
+                        thumbnailUrl:
+                            'https://raw.githubusercontent.com/YoruAkio/YoruAkio/refs/heads/main/yoruakio.png',
+                        sourceUrl: terra.config.website || 'https://akio.lol',
+                    },
+                    sendEphemeral: true,
+                },
             }
 
             return terra.socket.sendMessage(msg.key.remoteJid, payload, {

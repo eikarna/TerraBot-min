@@ -8,7 +8,8 @@ module.exports = {
         // Extract the text content if available
         let content = ''
 
-        if (terra.config.debugMessage) terra.logger.debug(JSON.stringify(msg.message));
+        if (terra.config.debugMessage)
+            terra.logger.debug(JSON.stringify(msg.message))
 
         if (msg.message?.conversation) {
             content = msg.message.conversation

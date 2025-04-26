@@ -49,11 +49,11 @@ class MessageUtils {
                     source.startsWith('http://') ||
                     source.startsWith('https://')
                 ) {
-                    return await this.getBufferFromUrl(source)
+                    return this.getBufferFromUrl(source)
                 } else {
                     // Assume it's a file path
                     if (await fs.pathExists(source)) {
-                        return await fs.readFile(source)
+                        return fs.readFile(source)
                     }
                 }
             }
@@ -83,7 +83,7 @@ class MessageUtils {
                 ...options,
             }
 
-            return await this.terra.sendMessage(jid, message)
+            return this.terra.sendMessage(jid, message)
         } catch (error) {
             this.logger.error(`Error sending image to ${jid}: ${error}`)
             throw error
@@ -108,7 +108,7 @@ class MessageUtils {
                 ...options,
             }
 
-            return await this.terra.sendMessage(jid, message)
+            return this.terra.sendMessage(jid, message)
         } catch (error) {
             this.logger.error(`Error sending video to ${jid}: ${error}`)
             throw error
@@ -143,7 +143,7 @@ class MessageUtils {
                 ...options,
             }
 
-            return await this.terra.sendMessage(jid, message)
+            return this.terra.sendMessage(jid, message)
         } catch (error) {
             this.logger.error(`Error sending audio to ${jid}: ${error}`)
             throw error
@@ -180,7 +180,7 @@ class MessageUtils {
                 ...options,
             }
 
-            return await this.terra.sendMessage(jid, message)
+            return this.terra.sendMessage(jid, message)
         } catch (error) {
             this.logger.error(`Error sending document to ${jid}: ${error}`)
             throw error
@@ -203,7 +203,7 @@ class MessageUtils {
                 ...options,
             }
 
-            return await this.terra.sendMessage(jid, message)
+            return this.terra.sendMessage(jid, message)
         } catch (error) {
             this.logger.error(`Error sending sticker to ${jid}: ${error}`)
             throw error
@@ -235,7 +235,7 @@ class MessageUtils {
                 ...options,
             }
 
-            return await this.terra.sendMessage(jid, message)
+            return this.terra.sendMessage(jid, message)
         } catch (error) {
             this.logger.error(`Error sending location to ${jid}: ${error}`)
             throw error
@@ -288,7 +288,7 @@ class MessageUtils {
                 ...options,
             }
 
-            return await this.terra.sendMessage(jid, message)
+            return this.terra.sendMessage(jid, message)
         } catch (error) {
             this.logger.error(`Error sending contact to ${jid}: ${error}`)
             throw error
@@ -332,7 +332,7 @@ class MessageUtils {
                 ...options,
             }
 
-            return await this.terra.sendMessage(jid, message)
+            return this.terra.sendMessage(jid, message)
         } catch (error) {
             this.logger.error(
                 `Error sending button message to ${jid}: ${error}`
@@ -349,7 +349,7 @@ class MessageUtils {
      */
     async react(msg, emoji) {
         try {
-            return await this.terra.sendMessage(msg.key.remoteJid, {
+            return this.terra.sendMessage(msg.key.remoteJid, {
                 react: {
                     text: emoji,
                     key: msg.key,

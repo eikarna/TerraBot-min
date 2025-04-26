@@ -448,6 +448,8 @@ class CommandHandler {
             return msg.message.imageMessage.caption
         } else if (msg.message.videoMessage?.caption) {
             return msg.message.videoMessage.caption
+        } else if (msg.message.interactiveResponseMessage?.body) {
+            return msg.message.interactiveResponseMessage.body.text
         }
 
         return null

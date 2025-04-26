@@ -26,6 +26,7 @@ const ReactionHandler = require('../handlers/ReactionHandler')
 const ContactManager = require('../utils/ContactManager')
 const GroupManager = require('../utils/GroupManager')
 const QueueManager = require('../utils/QueueManager')
+const ModuleManager = require('../modules')
 
 class Terra {
     constructor(config) {
@@ -280,6 +281,7 @@ class Terra {
         this.contactManager = new ContactManager(this)
         this.groupManager = new GroupManager(this)
         this.queueManager = new QueueManager(this)
+        this.modulesManager = new ModuleManager(this)
 
         // Initialize handlers
         this.commandHandler = new CommandHandler(this)
@@ -300,6 +302,7 @@ class Terra {
         // Create directories for commands and events if not exist
         fs.ensureDirSync(path.join(process.cwd(), 'commands'))
         fs.ensureDirSync(path.join(process.cwd(), 'events'))
+        fs.ensureDirSync(path.join(process.cwd(), 'modules'))
     }
 
     _setupShutdownHandlers() {
@@ -334,6 +337,7 @@ class Terra {
             // Load commands and events
             await this.commandHandler.loadCommands()
             await this.eventHandler.loadEvents()
+            await this.modulesManager.loadModules()
 
             // Force command handler and event handler registration
             if (this.commandHandler.commands.size === 0) {
@@ -383,6 +387,7 @@ class Terra {
             const signalKeyStore = makeCacheableSignalKeyStore(
                 state.keys,
                 this.logger
+                // null
             )
 
             // Create socket with more options for better handling
@@ -392,7 +397,7 @@ class Terra {
                     creds: state.creds,
                     keys: signalKeyStore,
                 },
-                printQRInTerminal: !this.config.use_pairing,
+                printQRInTerminal: !this.config.usePairing,
                 logger: pino({ level: 'silent' }),
                 markOnlineOnConnect: true,
                 connectTimeoutMs: this.config.connectionTimeout,
@@ -401,7 +406,7 @@ class Terra {
                 keepAliveIntervalMs: 10000,
                 fireInitQueries: true,
                 generateHighQualityLinkPreview: true,
-                syncFullHistory: true,
+                syncFullHistory: false,
                 // browser: ["IOS", "Safari", "20621.2.3"],
                 browser: ['Linux', 'Chrome', '133.0.6943.137'],
                 // browser: Browsers.ubuntu(),
@@ -420,7 +425,7 @@ class Terra {
                 // if (this.config.use_pairing && !this.socket.authState.creds.registered) {}
 
                 if (qr) {
-                    if (!this.config.use_pairing) {
+                    if (!this.config.usePairing) {
                         // Generate QR Code for terminal
                         qrcode.generate(qr, { small: true })
 
