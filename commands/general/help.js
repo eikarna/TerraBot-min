@@ -1,286 +1,217 @@
 module.exports = {
-  name: "help",
-  description: "Display available commands or command info",
-  aliases: ["h", "menu", "commands"],
-  usage: "{prefix}help [command] | {prefix}help category:[category]",
-  cooldown: 5,
-  category: "general",
-  execute: async (terra, msg, args, context = {}) => {
-    const { prefix } = terra.config;
+    name: 'help',
+    description: 'Display available commands or command info',
+    aliases: ['h', 'menu', 'commands'],
+    usage: '{prefix}help [command] | {prefix}help category:[category]',
+    cooldown: 5,
+    category: 'general',
+    execute: async (terra, msg, args, context = {}) => {
+        const { prefix } = terra.config
 
-    // Custom labels for commands and messages
-    const labels = {
-      commands: {},
-      messages: {
-        header: "*🤖 TerraBot Command Center*",
-        footer:
-          "✨ Use *{prefix}help <command>* for detailed info on any command.",
-        notFound:
-          "❌ Command *{command}* not found. Try *{prefix}help* to see all commands.",
-        ownerOnly: "👑 Owner-only command",
-        groupOnly: "👥 Group-only command",
-        privateOnly: "💌 Private chat only command",
-        examples: "💡 Examples:",
-        categoryHeader: "━━━━━ *{category}* ━━━━━",
-        stats: "*🔎 {totalCommands}* commands across *{categories}* categories",
-      },
-    };
-
-    // Let system store custom labels
-    if (!terra.helpLabels) {
-      terra.helpLabels = labels;
-    }
-
-    // Add or update command label
-    terra.addCommandLabel = (commandName, label) => {
-      if (!terra.helpLabels) terra.helpLabels = labels;
-      terra.helpLabels.commands[commandName] = label;
-    };
-
-    // Add or update message label
-    terra.addMessageLabel = (labelKey, text) => {
-      if (!terra.helpLabels) terra.helpLabels = labels;
-      terra.helpLabels.messages[labelKey] = text;
-    };
-
-    // Helper to get label with variable substitution
-    const getLabel = (key, vars = {}) => {
-      let text = terra.helpLabels?.messages[key] || labels.messages[key] || key;
-      Object.entries(vars).forEach(([k, v]) => {
-        text = text.replace(new RegExp(`\\{${k}\\}`, "g"), v);
-      });
-      return text;
-    };
-
-    // If arg starts with "category:", filter by that category
-    if (args.length > 0 && args[0].startsWith("category:")) {
-      const requestedCategory = args[0].substring(9).toLowerCase();
-      return showCategoryCommands(requestedCategory);
-    }
-
-    // If no command specified, show all commands
-    if (!args.length) {
-      return showAllCommands();
-    } else {
-      // Show info about specific command
-      const commandName = args[0].toLowerCase();
-      return showCommandDetails(commandName);
-    }
-
-    // Function to show all commands grouped by category
-    async function showAllCommands() {
-      // Group commands by category
-      const categories = {};
-      const commandNames = new Set();
-      let totalCommands = 0;
-
-      for (const [name, cmd] of terra.commandHandler.commands.entries()) {
-        // Skip aliases
-        if (commandNames.has(cmd.name)) continue;
-        commandNames.add(cmd.name);
-        totalCommands++;
-
-        const category = cmd.category || "uncategorized";
-        if (!categories[category]) {
-          categories[category] = [];
-        }
-
-        categories[category].push({
-          name: cmd.name,
-          description: cmd.description || "No description",
-          ownerOnly: !!cmd.ownerOnly,
-          groupOnly: !!cmd.groupOnly,
-          privateOnly: !!cmd.privateOnly,
-        });
-      }
-
-      let helpMessage = `${getLabel("header")}\n\n`;
-
-      // Add stats
-      helpMessage += `${getLabel("stats", {
-        totalCommands: totalCommands,
-        categories: Object.keys(categories).length,
-      })}\n\n`;
-
-      // Add commands by category
-      for (const [category, cmds] of Object.entries(categories)) {
-        if (cmds.length === 0) continue;
-
-        const catName = category.charAt(0).toUpperCase() + category.slice(1);
-        const catEmoji = getCategoryEmoji(category);
-        helpMessage += `${getLabel("categoryHeader", {
-          category: `${catEmoji} ${catName}`,
-        })}\n`;
-
-        for (const cmd of cmds) {
-          const customLabel = terra.helpLabels?.commands[cmd.name] || "";
-          const badges = [];
-
-          if (cmd.ownerOnly) badges.push("👑");
-          if (cmd.groupOnly) badges.push("👥");
-          if (cmd.privateOnly) badges.push("💌");
-
-          const badgeText = badges.length > 0 ? ` ${badges.join("")}` : "";
-          const cmdLabel = customLabel ? ` (${customLabel})` : "";
-
-          helpMessage += `  • *${prefix}${cmd.name}*${cmdLabel}${badgeText} - ${cmd.description}\n`;
-        }
-
-        helpMessage += "\n";
-      }
-
-      helpMessage += getLabel("footer", { prefix });
-      // return terra.reply(msg, helpMessage, { quoted: msg });
-      return terra.socket.sendMessage(
-        msg.key.remoteJid,
-        {
-          text: helpMessage,
-          contextInfo: {
-            isForwarding: true,
-            forwardingScore: 999,
-            mentionedJid: [msg.key.participant],
-            stanzaId: msg.key.id,
-            externalAdReply: {
-              title: "TerraBot Command Center",
-              body: "Use the command center to explore all available commands.",
-              mediaType: 1,
-              showAdAttribution: true,
-              renderLargerThumbnail: true,
-              thumbnailUrl: "https://raw.githubusercontent.com/YoruAkio/YoruAkio/refs/heads/main/yoruakio.png",
-              sourceUrl: terra.config.website || "https://akio.lol"
+        // Default labels
+        const labels = {
+            commands: {},
+            messages: {
+                header: '*🤖 TerraBot Command Center*',
+                footer: '✨ Use *{prefix}help <command>* for detailed info on any command.',
+                notFound:
+                    '❌ Command *{command}* not found. Try *{prefix}help*.',
+                ownerOnly: '👑 Owner-only command',
+                groupOnly: '👥 Group-only command',
+                privateOnly: '💌 Private chat only command',
+                examples: '💡 Examples:',
+                stats: '*🔎 {totalCommands}* commands across *{categories}* categories',
             },
-            sendEphemeral: true,
-          },
-        },
-        { quoted: msg }
-      );
-    }
-
-    // Function to show commands for a specific category
-    async function showCategoryCommands(category) {
-      const commands = Array.from(terra.commandHandler.commands.values())
-        .filter(
-          (cmd) => (cmd.category || "uncategorized").toLowerCase() === category
-        )
-        // Remove duplicates (aliases)
-        .filter(
-          (cmd, index, self) =>
-            index === self.findIndex((c) => c.name === cmd.name)
-        );
-
-      if (commands.length === 0) {
-        return terra.reply(
-          msg,
-          `❌ No commands found in category *${category}*`
-        );
-      }
-
-      const catName = category.charAt(0).toUpperCase() + category.slice(1);
-      const catEmoji = getCategoryEmoji(category);
-      let helpMessage = `*${catEmoji} ${catName} Commands*\n\n`;
-
-      for (const cmd of commands) {
-        const customLabel = terra.helpLabels?.commands[cmd.name] || "";
-        const badges = [];
-
-        if (cmd.ownerOnly) badges.push("👑");
-        if (cmd.groupOnly) badges.push("👥");
-        if (cmd.privateOnly) badges.push("💌");
-
-        const badgeText = badges.length > 0 ? ` ${badges.join("")}` : "";
-        const cmdLabel = customLabel ? ` (${customLabel})` : "";
-
-        helpMessage += `• *${prefix}${cmd.name}*${cmdLabel}${badgeText}\n`;
-        helpMessage += `  ↳ ${cmd.description || "No description"}\n`;
-
-        if (cmd.aliases && cmd.aliases.length) {
-          helpMessage += `  ↳ Aliases: ${cmd.aliases.join(", ")}\n`;
         }
 
-        helpMessage += "\n";
-      }
-
-      helpMessage += getLabel("footer", { prefix });
-      return terra.reply(msg, helpMessage);
-    }
-
-    // Function to show detailed info about a specific command
-    async function showCommandDetails(commandName) {
-      const command = terra.commandHandler.getCommand(commandName);
-
-      if (!command) {
-        return terra.reply(
-          msg,
-          getLabel("notFound", { command: commandName, prefix })
-        );
-      }
-
-      const catEmoji = getCategoryEmoji(command.category);
-      const customLabel = terra.helpLabels?.commands[command.name] || "";
-      const cmdLabel = customLabel ? ` (${customLabel})` : "";
-
-      let helpMessage = `*${catEmoji} Command: ${prefix}${command.name}*${cmdLabel}\n\n`;
-      helpMessage += `*Description:* ${
-        command.description || "No description"
-      }\n\n`;
-
-      // Add badges for special commands
-      const badges = [];
-      if (command.ownerOnly) badges.push(getLabel("ownerOnly"));
-      if (command.groupOnly) badges.push(getLabel("groupOnly"));
-      if (command.privateOnly) badges.push(getLabel("privateOnly"));
-
-      if (badges.length > 0) {
-        helpMessage += `*Notes:* ${badges.join(", ")}\n\n`;
-      }
-
-      if (command.aliases && command.aliases.length) {
-        helpMessage += `*Aliases:* ${command.aliases.join(", ")}\n\n`;
-      }
-
-      if (command.usage) {
-        helpMessage += `*Usage:* ${command.usage.replace(
-          "{prefix}",
-          prefix
-        )}\n\n`;
-      }
-
-      // Add examples if available
-      if (command.examples && command.examples.length) {
-        helpMessage += `${getLabel("examples")}\n`;
-        for (const example of command.examples) {
-          helpMessage += `  • ${example.replace("{prefix}", prefix)}\n`;
+        // Initialize or merge custom labels
+        terra.helpLabels = terra.helpLabels || labels
+        const getLabel = (key, vars = {}) => {
+            let txt =
+                terra.helpLabels.messages[key] || labels.messages[key] || ''
+            Object.entries(vars).forEach(([k, v]) => {
+                txt = txt.replace(new RegExp(`\{${k}\}`, 'g'), v)
+            })
+            return txt
         }
-        helpMessage += "\n";
-      }
 
-      if (command.cooldown) {
-        helpMessage += `*Cooldown:* ${command.cooldown} seconds\n\n`;
-      }
+        // Route based on commands
+        if (args.length && args[0].startsWith('command:')) {
+            // TODO: show command help individually
+            return showCommandDetails(args[0].slice(8).toLowerCase())
+        }
 
-      helpMessage += `*Category:* ${command.category || "uncategorized"}`;
+        // Route based on args
+        if (args.length && args[0].startsWith('category:')) {
+            return showCategoryCommands(args[0].slice(9).toLowerCase())
+        }
+        if (!args.length) {
+            return showAllCommands()
+        }
+        return showCommandDetails(args[0].toLowerCase())
 
-      return terra.reply(msg, helpMessage);
-    }
+        // Show all commands via native list menu
+        async function showAllCommands() {
+            // Group commands by category
+            const categories = {}
+            let total = 0
+            const seen = new Set()
+            for (const [_, cmd] of terra.commandHandler.commands.entries()) {
+                if (seen.has(cmd.name)) continue
+                seen.add(cmd.name)
+                total++
+                const cat = (cmd.category || 'uncategorized').toLowerCase()
+                if (!categories[cat]) categories[cat] = []
+                categories[cat].push(cmd)
+            }
 
-    // Get emoji for each category
-    function getCategoryEmoji(category) {
-      const categoryEmojis = {
-        general: "🔧",
-        media: "🎬",
-        fun: "🎮",
-        utility: "🛠️",
-        admin: "⚙️",
-        owner: "👑",
-        uncategorized: "📝",
-        sticker: "🖼️",
-        group: "👥",
-        download: "📥",
-        info: "ℹ️",
-        game: "🎲",
-      };
+            // Build rows for the list
+            const rows = []
+            for (const [cat, cmds] of Object.entries(categories)) {
+                const headerText = `${getCategoryEmoji(cat)} ${cat.charAt(0).toUpperCase() + cat.slice(1)}`
+                cmds.forEach((cmd) => {
+                    rows.push({
+                        header: headerText,
+                        title: `${prefix}${cmd.name}`,
+                        description: cmd.description || 'No description',
+                        id: `help command:${cmd.name}`,
+                    })
+                })
+            }
 
-      return categoryEmojis[category?.toLowerCase()] || "📌";
-    }
-  },
-};
+            const fallbackText = [
+                '*🤖 TerraBot Command Center*',
+                ...Object.entries(categories).map(([cat, cmds]) => {
+                    const emoji = getCategoryEmoji(cat)
+                    const catTitle = `${emoji} ${cat.charAt(0).toUpperCase() + cat.slice(1)}`
+                    const cmdLines = cmds.map(
+                        (cmd) =>
+                            `  • *${prefix}${cmd.name}* - ${cmd.description || 'No description'}`
+                    )
+                    return [`\n━━━━━ *${catTitle}* ━━━━━`, ...cmdLines].join('\n')
+                }),
+            ].join('\n')
+
+            const sections = Object.entries(categories).map(([cat, cmds]) => {
+                return {
+                    title: cat,
+                    highlight_label: `${cat.toUpperCase()} Commands`,
+                    rows: cmds.map((cmd) => ({
+                        header: cat,
+                        title: `${prefix}${cmd.name}`,
+                        description: cmd.description || 'No description',
+                        id: `${cmd.name}`,
+                    })),
+                }
+            })
+
+            // Build the buttons payload with nativeFlowInfo
+            const payload = {
+                text: fallbackText,
+                buttons: [
+                    {
+                        buttonId: 'action',
+                        buttonText: { displayText: getLabel('header') },
+                        type: 4,
+                        nativeFlowInfo: {
+                            name: 'single_select',
+                            paramsJson: JSON.stringify({
+                                title: 'Pilih~',
+                                sections,
+                            }),
+                        },
+                    },
+                ],
+                footer: getLabel('footer', { prefix }),
+                headerType: 1,
+            }
+
+            return terra.socket.sendMessage(msg.key.remoteJid, payload, {
+                quoted: msg,
+            })
+        }
+
+        // Fallback: show commands by category in text
+        async function showCategoryCommands(category) {
+            const cmds = Array.from(terra.commandHandler.commands.values())
+                .filter(
+                    (c) =>
+                        (c.category || 'uncategorized').toLowerCase() ===
+                        category
+                )
+                .filter(
+                    (c, i, arr) => arr.findIndex((x) => x.name === c.name) === i
+                )
+
+            if (!cmds.length) {
+                return terra.reply(
+                    msg,
+                    `❌ No commands found in category *${category}*`
+                )
+            }
+            let text = `*📂 ${category.charAt(0).toUpperCase() + category.slice(1)} Commands*\n\n`
+            cmds.forEach((c) => {
+                const badges = []
+                if (c.ownerOnly) badges.push('👑')
+                if (c.groupOnly) badges.push('👥')
+                if (c.privateOnly) badges.push('💌')
+                text += `• *${prefix}${c.name}* ${badges.join('')}\n  ↳ ${c.description}\n\n`
+            })
+            text += getLabel('footer', { prefix })
+            return terra.reply(msg, text)
+        }
+
+        // Show detailed command info in text
+        async function showCommandDetails(name) {
+            const cmd = terra.commandHandler.getCommand(name)
+            if (!cmd) {
+                return terra.reply(
+                    msg,
+                    getLabel('notFound', { command: name, prefix })
+                )
+            }
+            const badges = []
+            if (cmd.ownerOnly) badges.push(getLabel('ownerOnly'))
+            if (cmd.groupOnly) badges.push(getLabel('groupOnly'))
+            if (cmd.privateOnly) badges.push(getLabel('privateOnly'))
+
+            let text = `*${getCategoryEmoji(cmd.category)} Command: ${prefix}${cmd.name}*\n\n`
+            text += `*Description:* ${cmd.description}\n\n`
+            if (badges.length) text += `*Notes:* ${badges.join(', ')}\n\n`
+            if (cmd.aliases?.length)
+                text += `*Aliases:* ${cmd.aliases.join(', ')}\n\n`
+            if (cmd.usage)
+                text += `*Usage:* ${cmd.usage.replace('{prefix}', prefix)}\n\n`
+            if (cmd.examples?.length) {
+                text += `${getLabel('examples')}\n`
+                cmd.examples.forEach(
+                    (ex) => (text += `  • ${ex.replace('{prefix}', prefix)}\n`)
+                )
+                text += `\n`
+            }
+            if (cmd.cooldown) text += `*Cooldown:* ${cmd.cooldown}s\n\n`
+            text += `*Category:* ${cmd.category}`
+
+            return terra.reply(msg, text)
+        }
+
+        // Helper: category emoji
+        function getCategoryEmoji(category) {
+            const map = {
+                general: '🔧',
+                media: '🎬',
+                fun: '🎮',
+                utility: '🛠️',
+                admin: '⚙️',
+                owner: '👑',
+                uncategorized: '📝',
+                sticker: '🖼️',
+                group: '👥',
+                download: '📥',
+                info: 'ℹ️',
+                game: '🎲',
+            }
+            return map[category?.toLowerCase()] || '📌'
+        }
+    },
+}

@@ -48,55 +48,51 @@ TerraBot uses a config.json file for all settings. Here's an example with explan
 
 ```json
 {
-  "name": "TerraBot",
-  "prefix": "!",
-  "statusMessage": "🤖 TerraBot Active | Use !help for commands",
-  "sessionPath": "./sessions",
-  "logLevel": "info",
-  
-  "maxReconnects": 5,
-  "reconnectInterval": 3000,
-  "connectionTimeout": 60000,
-  "qrTimeout": 60000,
-  
-  "enableMessageLogging": true,
-  "enableReadReceipts": true,
-  "enableTypingIndicator": true,
-  "typingTimeout": 3000,
-  
-  "privateMode": false,
-  "owners": [
-    "628xxxxxxx",
-    "628xxxxxxx"
-  ],
-  "leveling": {
-    "enabled": true,
-    "levelUpMessages": false
-  }
+    "name": "TerraBot",
+    "prefix": "!",
+    "statusMessage": "🤖 TerraBot Active | Use !help for commands",
+    "sessionPath": "./sessions",
+    "logLevel": "info",
+
+    "maxReconnects": 5,
+    "reconnectInterval": 3000,
+    "connectionTimeout": 60000,
+    "qrTimeout": 60000,
+
+    "enableMessageLogging": true,
+    "enableReadReceipts": true,
+    "enableTypingIndicator": true,
+    "typingTimeout": 3000,
+
+    "privateMode": false,
+    "owners": ["628xxxxxxx", "628xxxxxxx"],
+    "leveling": {
+        "enabled": true,
+        "levelUpMessages": false
+    }
 }
 ```
 
 ### Key Configuration Options:
 
 - **Basic Settings**
-  - `name`: Bot display name
-  - `prefix`: Command prefix (e.g., `!` for commands like `!sticker`)
-  - `statusMessage`: WhatsApp status message
-  
+    - `name`: Bot display name
+    - `prefix`: Command prefix (e.g., `!` for commands like `!sticker`)
+    - `statusMessage`: WhatsApp status message
 - **Connection Settings**
-  - `sessionPath`: Where session data is stored
-  - `maxReconnects`: Maximum reconnection attempts
-  - `reconnectInterval`: Time between reconnection attempts (ms)
-  - `qrTimeout`: How long to wait for QR code scan (ms)
+
+    - `sessionPath`: Where session data is stored
+    - `maxReconnects`: Maximum reconnection attempts
+    - `reconnectInterval`: Time between reconnection attempts (ms)
+    - `qrTimeout`: How long to wait for QR code scan (ms)
 
 - **Feature Toggles**
-  - `enableMessageLogging`: Log incoming/outgoing messages
-  - `enableReadReceipts`: Send read receipts
-  - `enableTypingIndicator`: Show typing indicator when processing commands
-  
+    - `enableMessageLogging`: Log incoming/outgoing messages
+    - `enableReadReceipts`: Send read receipts
+    - `enableTypingIndicator`: Show typing indicator when processing commands
 - **Access Control**
-  - `privateMode`: When true, only owners can use the bot
-  - `owners`: List of phone numbers (with country code) of bot owners
+    - `privateMode`: When true, only owners can use the bot
+    - `owners`: List of phone numbers (with country code) of bot owners
 
 ## 🐳 Docker Support
 
@@ -140,24 +136,28 @@ Scan the QR code with your WhatsApp to connect.
 
 ### Media Commands
 
-| Command | Aliases | Description |
-|---------|---------|-------------|
-| `!sticker` | `!s`, `!stikr`, `!stkr` | Convert media to sticker |
-| `!toimage` | `!toimg`, `!unsticker` | Convert sticker back to image/GIF |
-| `!avatar` | `!pfp`, `!dp` | Display user profile picture |
+| Command    | Aliases                 | Description                       |
+| ---------- | ----------------------- | --------------------------------- |
+| `!sticker` | `!s`, `!stikr`, `!stkr` | Convert media to sticker          |
+| `!toimage` | `!toimg`, `!unsticker`  | Convert sticker back to image/GIF |
+| `!avatar`  | `!pfp`, `!dp`           | Display user profile picture      |
 
 ### Usage Examples
 
 Convert an image to a sticker:
+
 ```
 !sticker
 ```
+
 (Reply to an image or send with caption)
 
 Convert a sticker back to an image:
+
 ```
 !toimage
 ```
+
 (Reply to a sticker)
 
 ## 🧩 Project Structure
@@ -188,6 +188,7 @@ The bot supports various customization options for stickers:
 ### Media Conversion
 
 TerraBot can convert between multiple formats:
+
 - Images to stickers
 - Videos to animated stickers
 - Stickers to images/GIFs
